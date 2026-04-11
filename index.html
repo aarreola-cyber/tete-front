@@ -1,19 +1,51 @@
 <!DOCTYPE html>
 <html>
-<body style="margin:0;background:black;color:white;font-size:28px;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tete</title>
+
+<style>
+body {
+  margin:0;
+  background:black;
+  color:white;
+  font-family:sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  text-align:center;
+  overflow:hidden;
+}
+
+#texto {
+  font-size:28px;
+  padding:20px;
+  max-width:600px;
+  text-shadow:0 0 20px rgba(0,0,0,0.8);
+}
+</style>
+</head>
+
+<body>
 
 <div id="texto">...</div>
 
 <script>
 async function hablar() {
-  const res = await fetch("https://tete-api-production.up.railway.app/mensaje", {
-    method: "POST"
-  });
-  const data = await res.json();
-  document.getElementById("texto").innerText = data.text;
+  try {
+    const res = await fetch("https://tete-api-production.up.railway.app/mensaje");
+    const data = await res.json();
+    document.getElementById("texto").innerText = data.text;
+  } catch (e) {
+    document.getElementById("texto").innerText = "error...";
+  }
 }
 
-setInterval(hablar, 5000);
+// cada 3 segundos cambia
+setInterval(hablar, 3000);
+
+// primera carga
 hablar();
 </script>
 
