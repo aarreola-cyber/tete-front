@@ -7,32 +7,65 @@
 <style>
 body {
   margin:0;
-  background:black;
-  color:white;
-  font-family:sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  text-align:center;
   overflow:hidden;
+  background:black;
+  font-family:sans-serif;
+}
+
+video {
+  position:fixed;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:-1;
 }
 
 #texto {
+  position:absolute;
+  bottom:20%;
+  width:100%;
+  text-align:center;
+  color:white;
   font-size:28px;
   padding:20px;
-  max-width:600px;
   text-shadow:0 0 20px rgba(0,0,0,0.8);
+}
+
+#btn {
+  position:absolute;
+  bottom:10%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:15px 30px;
+  font-size:16px;
+  border:none;
+  background:white;
+  color:black;
 }
 </style>
 </head>
 
 <body>
 
+<video autoplay loop muted playsinline>
+  <source src="https://cdn.coverr.co/videos/coverr-woman-looking-at-camera-5174/1080p.mp4">
+</video>
+
 <div id="texto">...</div>
 
+<button id="btn" onclick="hablar()">ver qué dice</button>
+
 <script>
+let count = 0;
+
 async function hablar() {
+  if(count >= 5) {
+    document.getElementById("texto").innerText = "oye… esto ya no es gratis";
+    return;
+  }
+
+  count++;
+
   try {
     const res = await fetch("https://tete-api-production.up.railway.app/mensaje");
     const data = await res.json();
@@ -42,10 +75,8 @@ async function hablar() {
   }
 }
 
-// cada 3 segundos cambia
-setInterval(hablar, 3000);
-
-// primera carga
+// auto loop (enganche)
+setInterval(hablar, 5000);
 hablar();
 </script>
 
