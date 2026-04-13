@@ -1,24 +1,48 @@
 <!DOCTYPE html>
 <html>
-<body style="margin:0;background:black;color:white;font-size:28px;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;flex-direction:column;gap:40px;">
+<body style="margin:0;background:black;color:white;font-family:sans-serif;display:flex;flex-direction:column;height:100vh;">
 
-<div id="texto">...</div>
+<div id="chat" style="flex:1;overflow:auto;padding:20px;"></div>
 
-<button onclick="hablar()" style="padding:20px 40px;font-size:20px;">ver qué dice</button>
+<div style="display:flex;padding:10px;background:#111;">
+  <input id="input" placeholder="escríbele..." style="flex:1;padding:10px;font-size:16px;">
+  <button onclick="enviar()" style="padding:10px 20px;">→</button>
+</div>
 
 <script>
-async function hablar() {
+async function enviar() {
+  const input = document.getElementById("input");
+  const texto = input.value;
+  if (!texto) return;
+
+  agregar("tú: " + texto);
+  input.value = "";
+
   try {
-    const res = await fetch("https://tete-api-production.up.railway.app/mensaje", {
-      method: "POST"
+    const res = await fetch("https://tete-api-production.up.railway.app/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ mensaje: texto })
     });
 
     const data = await res.json();
-    document.getElementById("texto").innerText = data.text;
+
+    agregar("tete: " + data.text);
 
   } catch (e) {
-    document.getElementById("texto").innerText = "no estás listo para esto...";
+    agregar("tete: ... no deberías estar aquí");
   }
+}
+
+function agregar(texto) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.style.marginBottom = "10px";
+  div.innerText = texto;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 </script>
 
