@@ -2,19 +2,112 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin:0;
+  background:black;
+  font-family:sans-serif;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  color:white;
+}
+
+/* chat */
+#chat {
+  flex:1;
+  overflow:auto;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* input */
+#bar {
+  display:flex;
+  padding:10px;
+  background:#111;
+  border-top:1px solid #222;
+}
+
+#input {
+  flex:1;
+  padding:12px;
+  border-radius:20px;
+  border:none;
+  background:#222;
+  color:white;
+  font-size:16px;
+  outline:none;
+}
+
+#btn {
+  margin-left:10px;
+  padding:12px 18px;
+  border-radius:20px;
+  border:none;
+  background:#444;
+  color:white;
+  transition:0.1s;
+  cursor:pointer;
+}
+
+/* burbujas */
+.bubble {
+  max-width:75%;
+  padding:12px 16px;
+  border-radius:18px;
+  line-height:1.4;
+  font-size:15px;
+  opacity:0;
+  transform:translateY(6px);
+  transition:0.2s;
+}
+
+.user {
+  align-self:flex-end;
+  background:#2563eb;
+}
+
+.bot {
+  align-self:flex-start;
+  background:#222;
+  color:#ddd;
+}
+
+/* typing dots */
+.dots {
+  display:flex;
+  gap:4px;
+}
+
+.dot {
+  width:6px;
+  height:6px;
+  background:#aaa;
+  border-radius:50%;
+  animation:blink 1.2s infinite;
+}
+
+.dot:nth-child(2) { animation-delay:0.2s; }
+.dot:nth-child(3) { animation-delay:0.4s; }
+
+@keyframes blink {
+  0% { opacity:0.2; }
+  50% { opacity:1; }
+  100% { opacity:0.2; }
+}
+</style>
 </head>
 
-<body style="margin:0;background:black;font-family:sans-serif;display:flex;flex-direction:column;height:100vh;color:white;">
+<body>
 
-<div id="chat" style="flex:1;overflow:auto;padding:15px;display:flex;flex-direction:column;gap:10px;"></div>
+<div id="chat"></div>
 
-<div style="display:flex;padding:10px;background:#111;border-top:1px solid #222;">
-  <input id="input" placeholder="Escríbele..."
-    style="flex:1;padding:12px;border-radius:20px;border:none;background:#222;color:white;font-size:16px;outline:none;">
-  <button id="btn" onclick="enviar()"
-    style="margin-left:10px;padding:12px 18px;border-radius:20px;border:none;background:#444;color:white;transition:0.1s;">
-    →
-  </button>
+<div id="bar">
+  <input id="input" placeholder="Escríbele...">
+  <button id="btn">→</button>
 </div>
 
 <script>
@@ -25,50 +118,45 @@ if (!userId) {
   localStorage.setItem("tete_user", userId);
 }
 
+const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const btn = document.getElementById("btn");
 
 input.focus();
 
-// 🔥 ENTER PRO
-input.addEventListener("keydown", function(e) {
+// 🔥 ENTER PERFECTO
+input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-
-    btn.style.transform = "scale(0.92)";
-    setTimeout(() => btn.style.transform = "scale(1)", 120);
-
+    animarBoton();
     enviar();
   }
 });
 
-let ultimoMensaje = Date.now();
+btn.onclick = () => {
+  animarBoton();
+  enviar();
+};
 
-// 🔥 reenganche suave
-setInterval(() => {
-  const ahora = Date.now();
-  if (ahora - ultimoMensaje > 60000) {
-    agregar("tete", "… te fuiste tan rápido?");
-    ultimoMensaje = ahora;
-  }
-}, 20000);
+function animarBoton() {
+  btn.style.transform = "scale(0.9)";
+  setTimeout(() => btn.style.transform = "scale(1)", 120);
+}
 
+// 🔥 enviar
 async function enviar() {
   const texto = input.value.trim();
   if (!texto) return;
 
-  agregar("tú", texto);
+  agregar(texto, "user");
   input.value = "";
-  ultimoMensaje = Date.now();
 
-  const typing = typingDots();
+  const typing = crearTyping();
 
   try {
     const res = await fetch("https://tete-api-production.up.railway.app/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         mensaje: texto,
         userId: userId
@@ -77,87 +165,58 @@ async function enviar() {
 
     const data = await res.json();
 
+    // 🔥 delay realista según longitud
+    const delay = Math.min(2000, 500 + data.text.length * 25);
+
     setTimeout(() => {
-      typing.innerText = data.text;
-    }, 600 + Math.random() * 1000);
+      typing.remove(); // 🔥 elimina typing limpio
+      agregar(data.text, "bot");
+    }, delay);
 
   } catch (e) {
-    typing.innerText = "… te perdiste";
+    typing.remove();
+    agregar("… te perdiste", "bot");
   }
 
   input.focus();
 }
 
-// 🔥 burbujas
-function agregar(quien, texto) {
-  const chat = document.getElementById("chat");
-
-  const wrapper = document.createElement("div");
-  wrapper.style.display = "flex";
-  wrapper.style.justifyContent = quien === "tú" ? "flex-end" : "flex-start";
-
+// 🔥 agregar burbuja
+function agregar(texto, tipo) {
   const bubble = document.createElement("div");
-
-  bubble.style.maxWidth = "75%";
-  bubble.style.padding = "12px 16px";
-  bubble.style.borderRadius = "18px";
-  bubble.style.lineHeight = "1.4";
-  bubble.style.fontSize = "15px";
-  bubble.style.opacity = "0";
-  bubble.style.transform = "translateY(5px)";
-  bubble.style.transition = "0.2s";
-
-  if (quien === "tú") {
-    bubble.style.background = "#2563eb";
-    bubble.style.color = "white";
-  } else {
-    bubble.style.background = "#222";
-    bubble.style.color = "#ddd";
-  }
-
+  bubble.className = "bubble " + tipo;
   bubble.innerText = texto;
 
-  wrapper.appendChild(bubble);
-  chat.appendChild(wrapper);
+  chat.appendChild(bubble);
 
   setTimeout(() => {
     bubble.style.opacity = "1";
     bubble.style.transform = "translateY(0)";
-  }, 30);
+  }, 20);
 
   chat.scrollTop = chat.scrollHeight;
 
   return bubble;
 }
 
-// 🔥 typing animado (...)
-function typingDots() {
-  const chat = document.getElementById("chat");
-
-  const wrapper = document.createElement("div");
-  wrapper.style.display = "flex";
-  wrapper.style.justifyContent = "flex-start";
-
+// 🔥 typing REAL (3 dots)
+function crearTyping() {
   const bubble = document.createElement("div");
+  bubble.className = "bubble bot";
 
-  bubble.style.padding = "12px 16px";
-  bubble.style.borderRadius = "18px";
-  bubble.style.background = "#222";
-  bubble.style.color = "#aaa";
+  const dots = document.createElement("div");
+  dots.className = "dots";
 
-  let dots = 0;
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement("div");
+    d.className = "dot";
+    dots.appendChild(d);
+  }
 
-  const interval = setInterval(() => {
-    dots = (dots + 1) % 4;
-    bubble.innerText = ".".repeat(dots);
-  }, 300);
-
-  wrapper.appendChild(bubble);
-  chat.appendChild(wrapper);
+  bubble.appendChild(dots);
+  chat.appendChild(bubble);
 
   chat.scrollTop = chat.scrollHeight;
-
-  bubble.stop = () => clearInterval(interval);
 
   return bubble;
 }
