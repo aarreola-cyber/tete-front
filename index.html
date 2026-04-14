@@ -4,27 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root{
---bg1:#0b0b12;
---bg2:#000;
---glass:rgba(255,255,255,0.06);
---border:rgba(255,255,255,0.08);
---blue:#2563eb;
---blue2:#1d4ed8;
-}
-
-*{box-sizing:border-box}
-
-body{
-margin:0;
-height:100vh;
-display:flex;
-flex-direction:column;
-font-family:-apple-system,sans-serif;
-background:linear-gradient(to bottom,var(--bg1),var(--bg2));
-color:#fff;
-overflow:hidden;
-}
+body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
 /* HEADER */
 #header{
@@ -35,21 +15,11 @@ align-items:center;
 padding:12px;
 backdrop-filter:blur(15px);
 background:rgba(10,10,20,0.6);
-border-bottom:1px solid var(--border);
+border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 #header img{
-width:42px;
-height:42px;
-border-radius:50%;
-margin-right:10px;
-animation:breathe 3s infinite;
-}
-
-@keyframes breathe{
-0%{transform:scale(1)}
-50%{transform:scale(1.05)}
-100%{transform:scale(1)}
+width:42px;height:42px;border-radius:50%;margin-right:10px;
 }
 
 #status{font-size:12px;color:#aaa}
@@ -64,7 +34,6 @@ flex-direction:column;
 gap:10px;
 }
 
-/* BUBBLES */
 .bubble{
 max-width:75%;
 padding:12px;
@@ -74,26 +43,21 @@ animation:fade .2s;
 
 .user{
 align-self:flex-end;
-background:linear-gradient(135deg,var(--blue),var(--blue2));
+background:#2563eb;
 }
 
 .bot{
 align-self:flex-start;
-background:var(--glass);
-border:1px solid var(--border);
+background:#222;
 }
 
-@keyframes fade{
-from{opacity:0}
-to{opacity:1}
-}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 
 /* INPUT */
 #bar{
 display:flex;
 padding:10px;
-background:rgba(10,10,20,0.7);
-backdrop-filter:blur(15px);
+background:#111;
 }
 
 #input{
@@ -110,7 +74,7 @@ margin-left:10px;
 padding:12px;
 border:none;
 border-radius:20px;
-background:var(--blue);
+background:#2563eb;
 color:#fff;
 }
 
@@ -167,7 +131,6 @@ function typing(){
 
 function tiempo(t){
  let x=300+t.length*20;
- if(Math.random()<0.2) x+=300;
  return Math.min(x,2000);
 }
 
@@ -184,14 +147,27 @@ async function enviar(){
  let data=null;
 
  try{
+  const controller = new AbortController();
+  setTimeout(()=>controller.abort(),10000);
+
   const res=await fetch("https://tete-api-production.up.railway.app/chat",{
    method:"POST",
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({mensaje:txt,userId})
+   body:JSON.stringify({mensaje:txt,userId}),
+   signal:controller.signal
   });
 
-  data=await res.json();
- }catch(e){}
+  const text=await res.text();
+
+  try{
+    data=JSON.parse(text);
+  }catch{
+    data={text:"… casi te respondo"};
+  }
+
+ }catch(e){
+  console.log("ERROR:",e);
+ }
 
  t.remove();
 
@@ -209,6 +185,7 @@ async function enviar(){
 input.addEventListener("keydown",e=>{
  if(e.key==="Enter") enviar();
 });
+
 document.getElementById("btn").onclick=enviar;
 </script>
 
