@@ -5,16 +5,15 @@
 <div id="chat" style="flex:1;overflow:auto;padding:20px;"></div>
 
 <div style="display:flex;padding:10px;background:#111;">
-  <input id="input" placeholder="escríbele..." 
+  <input id="input" placeholder="escríbele..."
     style="flex:1;padding:12px;font-size:16px;background:#222;color:white;border:none;outline:none;">
-  <button onclick="enviar()" 
+  <button onclick="enviar()"
     style="padding:12px 20px;background:#444;color:white;border:none;cursor:pointer;">
     →
   </button>
 </div>
 
 <script>
-// 🔥 ID persistente (clave para memoria real)
 let userId = localStorage.getItem("tete_user");
 
 if (!userId) {
@@ -22,10 +21,20 @@ if (!userId) {
   localStorage.setItem("tete_user", userId);
 }
 
-// 🔥 enviar con ENTER
 document.getElementById("input").addEventListener("keypress", function(e) {
   if (e.key === "Enter") enviar();
 });
+
+let ultimoMensaje = Date.now();
+
+// 🔥 reenganche pasivo (sin molestar)
+setInterval(() => {
+  const ahora = Date.now();
+  if (ahora - ultimoMensaje > 60000) {
+    agregar("tete", "… te fuiste tan rápido?");
+    ultimoMensaje = ahora;
+  }
+}, 20000);
 
 async function enviar() {
   const input = document.getElementById("input");
@@ -35,7 +44,8 @@ async function enviar() {
   agregar("tú", texto);
   input.value = "";
 
-  // 🔥 efecto escribiendo
+  ultimoMensaje = Date.now();
+
   const typing = agregar("tete", "escribiendo...");
 
   try {
@@ -52,7 +62,6 @@ async function enviar() {
 
     const data = await res.json();
 
-    // 🔥 delay humano variable
     setTimeout(() => {
       typing.innerText = "tete: " + data.text;
     }, 600 + Math.random() * 1000);
@@ -62,7 +71,6 @@ async function enviar() {
   }
 }
 
-// 🔥 render mensajes
 function agregar(quien, texto) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
@@ -76,9 +84,7 @@ function agregar(quien, texto) {
 
   chat.appendChild(div);
 
-  setTimeout(() => {
-    div.style.opacity = "1";
-  }, 50);
+  setTimeout(() => div.style.opacity = "1", 50);
 
   chat.scrollTop = chat.scrollHeight;
 
