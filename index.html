@@ -3,223 +3,138 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {
-  margin:0;
-  background:black;
-  font-family:sans-serif;
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-  color:white;
-}
+body{margin:0;background:#000;color:#fff;font-family:sans-serif;height:100vh;display:flex;flex-direction:column}
 
-/* chat */
-#chat {
-  flex:1;
-  overflow:auto;
-  padding:15px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
+#header{display:flex;align-items:center;padding:10px;background:#111}
+#header img{width:40px;height:40px;border-radius:50%;margin-right:10px}
 
-/* input */
-#bar {
-  display:flex;
-  padding:10px;
-  background:#111;
-  border-top:1px solid #222;
-}
+#chat{flex:1;overflow:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
 
-#input {
-  flex:1;
-  padding:12px;
-  border-radius:20px;
-  border:none;
-  background:#222;
-  color:white;
-  font-size:16px;
-  outline:none;
-}
+.bubble{max-width:75%;padding:12px;border-radius:18px;opacity:0;transform:translateY(5px);transition:.2s}
+.user{align-self:flex-end;background:#2563eb}
+.bot{align-self:flex-start;background:#222}
 
-#btn {
-  margin-left:10px;
-  padding:12px 18px;
-  border-radius:20px;
-  border:none;
-  background:#444;
-  color:white;
-  transition:0.1s;
-  cursor:pointer;
-}
+#bar{display:flex;padding:10px;background:#111}
+#input{flex:1;padding:12px;border-radius:20px;border:none;background:#222;color:#fff}
+#btn{margin-left:10px;padding:12px;border-radius:20px;border:none;background:#444}
 
-/* burbujas */
-.bubble {
-  max-width:75%;
-  padding:12px 16px;
-  border-radius:18px;
-  line-height:1.4;
-  font-size:15px;
-  opacity:0;
-  transform:translateY(6px);
-  transition:0.2s;
-}
-
-.user {
-  align-self:flex-end;
-  background:#2563eb;
-}
-
-.bot {
-  align-self:flex-start;
-  background:#222;
-  color:#ddd;
-}
-
-/* typing dots */
-.dots {
-  display:flex;
-  gap:4px;
-}
-
-.dot {
-  width:6px;
-  height:6px;
-  background:#aaa;
-  border-radius:50%;
-  animation:blink 1.2s infinite;
-}
-
-.dot:nth-child(2) { animation-delay:0.2s; }
-.dot:nth-child(3) { animation-delay:0.4s; }
-
-@keyframes blink {
-  0% { opacity:0.2; }
-  50% { opacity:1; }
-  100% { opacity:0.2; }
-}
+.dots{display:flex;gap:4px}
+.dot{width:6px;height:6px;background:#aaa;border-radius:50%;animation:blink 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
 </style>
 </head>
 
 <body>
 
+<div id="header">
+<img src="https://i.imgur.com/1X6bGQX.jpg">
+<div>
+<div>Tete</div>
+<div id="status" style="font-size:12px;color:#888">en línea</div>
+</div>
+</div>
+
 <div id="chat"></div>
 
 <div id="bar">
-  <input id="input" placeholder="Escríbele...">
-  <button id="btn">→</button>
+<input id="input" placeholder="Escríbele...">
+<button id="btn">→</button>
 </div>
 
 <script>
-let userId = localStorage.getItem("tete_user");
-
-if (!userId) {
-  userId = "user_" + Math.random().toString(36).substring(2);
-  localStorage.setItem("tete_user", userId);
-}
+let userId = localStorage.getItem("tete_user") || ("u_"+Math.random());
+localStorage.setItem("tete_user", userId);
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const btn = document.getElementById("btn");
+const status = document.getElementById("status");
 
-input.focus();
+let ultimoUsuario = Date.now();
 
-// 🔥 ENTER PERFECTO
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    animarBoton();
-    enviar();
-  }
+input.addEventListener("keydown", e=>{
+ if(e.key==="Enter"){e.preventDefault(); enviar();}
 });
+btn.onclick = enviar;
 
-btn.onclick = () => {
-  animarBoton();
-  enviar();
-};
-
-function animarBoton() {
-  btn.style.transform = "scale(0.9)";
-  setTimeout(() => btn.style.transform = "scale(1)", 120);
+function bubble(text, cls){
+ const b=document.createElement("div");
+ b.className="bubble "+cls;
+ b.innerText=text;
+ chat.appendChild(b);
+ setTimeout(()=>{b.style.opacity=1;b.style.transform="translateY(0)"},20);
+ chat.scrollTop=chat.scrollHeight;
+ return b;
 }
 
-// 🔥 enviar
-async function enviar() {
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  agregar(texto, "user");
-  input.value = "";
-
-  const typing = crearTyping();
-
-  try {
-    const res = await fetch("https://tete-api-production.up.railway.app/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mensaje: texto,
-        userId: userId
-      })
-    });
-
-    const data = await res.json();
-
-    // 🔥 delay realista según longitud
-    const delay = Math.min(2000, 500 + data.text.length * 25);
-
-    setTimeout(() => {
-      typing.remove(); // 🔥 elimina typing limpio
-      agregar(data.text, "bot");
-    }, delay);
-
-  } catch (e) {
-    typing.remove();
-    agregar("… te perdiste", "bot");
-  }
-
-  input.focus();
+function typing(){
+ const b=document.createElement("div");
+ b.className="bubble bot";
+ const d=document.createElement("div"); d.className="dots";
+ for(let i=0;i<3;i++){let dot=document.createElement("div");dot.className="dot";d.appendChild(dot);}
+ b.appendChild(d);
+ chat.appendChild(b);
+ chat.scrollTop=chat.scrollHeight;
+ return b;
 }
 
-// 🔥 agregar burbuja
-function agregar(texto, tipo) {
-  const bubble = document.createElement("div");
-  bubble.className = "bubble " + tipo;
-  bubble.innerText = texto;
+async function enviar(){
+ const txt=input.value.trim();
+ if(!txt) return;
 
-  chat.appendChild(bubble);
+ bubble(txt,"user");
+ input.value="";
+ ultimoUsuario=Date.now();
 
-  setTimeout(() => {
-    bubble.style.opacity = "1";
-    bubble.style.transform = "translateY(0)";
-  }, 20);
+ status.innerText="escribiendo...";
+ const t=typing();
 
-  chat.scrollTop = chat.scrollHeight;
+ const res=await fetch("https://tete-api-production.up.railway.app/chat",{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({mensaje:txt,userId})
+ });
 
-  return bubble;
+ const data=await res.json();
+
+ setTimeout(()=>{
+  t.remove();
+  bubble(data.text,"bot");
+  status.innerText="en línea";
+ },800);
 }
 
-// 🔥 typing REAL (3 dots)
-function crearTyping() {
-  const bubble = document.createElement("div");
-  bubble.className = "bubble bot";
+// PRESENCIA
+setInterval(async ()=>{
+ const ahora=Date.now();
 
-  const dots = document.createElement("div");
-  dots.className = "dots";
+ if(ahora-ultimoUsuario>60000){
 
-  for (let i = 0; i < 3; i++) {
-    const d = document.createElement("div");
-    d.className = "dot";
-    dots.appendChild(d);
-  }
+  status.innerText="escribiendo...";
+  const t=typing();
 
-  bubble.appendChild(dots);
-  chat.appendChild(bubble);
+  const res=await fetch("https://tete-api-production.up.railway.app/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+     mensaje:"INICIAR_CONVERSACION",
+     userId
+   })
+  });
 
-  chat.scrollTop = chat.scrollHeight;
+  const data=await res.json();
 
-  return bubble;
-}
+  setTimeout(()=>{
+    t.remove();
+    bubble(data.text,"bot");
+    status.innerText="en línea";
+  },1200);
+
+  ultimoUsuario=Date.now();
+ }
+},15000);
 </script>
 
 </body>
