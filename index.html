@@ -5,18 +5,27 @@
 <div id="chat" style="flex:1;overflow:auto;padding:20px;"></div>
 
 <div style="display:flex;padding:10px;background:#111;">
-  <input id="input" placeholder="escríbele..." style="flex:1;padding:12px;font-size:16px;background:#222;color:white;border:none;">
-  <button onclick="enviar()" style="padding:12px 20px;background:#444;color:white;border:none;">→</button>
+  <input id="input" placeholder="escríbele..." 
+    style="flex:1;padding:12px;font-size:16px;background:#222;color:white;border:none;outline:none;">
+  <button onclick="enviar()" 
+    style="padding:12px 20px;background:#444;color:white;border:none;cursor:pointer;">
+    →
+  </button>
 </div>
 
 <script>
-// 🔥 ID persistente
+// 🔥 ID persistente (clave para memoria real)
 let userId = localStorage.getItem("tete_user");
 
 if (!userId) {
   userId = "user_" + Math.random().toString(36).substring(2);
   localStorage.setItem("tete_user", userId);
 }
+
+// 🔥 enviar con ENTER
+document.getElementById("input").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") enviar();
+});
 
 async function enviar() {
   const input = document.getElementById("input");
@@ -26,7 +35,8 @@ async function enviar() {
   agregar("tú", texto);
   input.value = "";
 
-  const typing = agregar("tete", "...");
+  // 🔥 efecto escribiendo
+  const typing = agregar("tete", "escribiendo...");
 
   try {
     const res = await fetch("https://tete-api-production.up.railway.app/chat", {
@@ -42,28 +52,33 @@ async function enviar() {
 
     const data = await res.json();
 
+    // 🔥 delay humano variable
     setTimeout(() => {
       typing.innerText = "tete: " + data.text;
-    }, 800 + Math.random() * 800);
+    }, 600 + Math.random() * 1000);
 
   } catch (e) {
     typing.innerText = "tete: … te perdiste";
   }
 }
 
+// 🔥 render mensajes
 function agregar(quien, texto) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
 
   div.style.marginBottom = "12px";
   div.style.opacity = "0";
-  div.style.transition = "0.3s";
+  div.style.transition = "0.25s";
+  div.style.lineHeight = "1.4";
 
   div.innerText = quien + ": " + texto;
 
   chat.appendChild(div);
 
-  setTimeout(() => div.style.opacity = "1", 50);
+  setTimeout(() => {
+    div.style.opacity = "1";
+  }, 50);
 
   chat.scrollTop = chat.scrollHeight;
 
