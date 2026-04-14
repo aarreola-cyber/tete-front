@@ -59,14 +59,12 @@ transition:.25s;
 backdrop-filter: blur(8px);
 }
 
-/* USER */
 .user{
 align-self:flex-end;
 background: linear-gradient(135deg,#2563eb,#1d4ed8);
 box-shadow:0 5px 20px rgba(37,99,235,0.4);
 }
 
-/* BOT */
 .bot{
 align-self:flex-start;
 background: rgba(255,255,255,0.05);
@@ -101,10 +99,6 @@ color:white;
 cursor:pointer;
 }
 
-#btn:hover{
-transform:scale(1.05);
-}
-
 /* TYPING */
 .dots{display:flex;gap:4px}
 .dot{
@@ -124,7 +118,6 @@ animation:blink 1.2s infinite;
 
 <body>
 
-<!-- HEADER -->
 <div id="header">
 <img src="https://raw.githubusercontent.com/aarreola-cyber/tete-front/main/650663840_122235082904132407_4121639713471677136_n.png">
 <div>
@@ -133,10 +126,8 @@ animation:blink 1.2s infinite;
 </div>
 </div>
 
-<!-- CHAT -->
 <div id="chat"></div>
 
-<!-- INPUT -->
 <div id="bar">
 <input id="input" placeholder="Escríbele...">
 <button id="btn">→</button>
@@ -179,6 +170,8 @@ function bubble(texto, tipo){
  },20);
 
  chat.scrollTo({top: chat.scrollHeight, behavior:"smooth"});
+
+ return b;
 }
 
 /* TYPING */
@@ -199,8 +192,32 @@ function typing(){
 
  b.appendChild(d);
  chat.appendChild(b);
- chat.scrollTo({top: chat.scrollHeight, behavior:"smooth"});
+ chat.scrollTop=chat.scrollHeight;
+
  return b;
+}
+
+/* RETRY */
+async function enviarRetry(txt){
+ let data=null;
+
+ try{
+  const res=await fetch("https://tete-api-production.up.railway.app/chat",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({mensaje:txt,userId})
+  });
+
+  data=await res.json();
+ }catch{}
+
+ if(data && data.text){
+   bubble(data.text,"bot");
+ }else{
+   bubble("… ahora sí me hiciste pensar de más","bot");
+ }
+
+ status.innerText="en línea";
 }
 
 /* ENVIAR */
@@ -214,6 +231,10 @@ async function enviar(){
 
  status.innerText="en línea";
 
+ // 🔥 reacción inmediata
+ const reacciones = ["mmm…","a ver…","espera…","interesante…"];
+ const pre = bubble(reacciones[Math.floor(Math.random()*reacciones.length)],"bot");
+
  await new Promise(r=>setTimeout(r,300+Math.random()*400));
 
  status.innerText="escribiendo...";
@@ -223,7 +244,7 @@ async function enviar(){
 
  try{
   const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),8000);
+  const timeout=setTimeout(()=>controller.abort(),15000);
 
   const res=await fetch("https://tete-api-production.up.railway.app/chat",{
     method:"POST",
@@ -237,6 +258,8 @@ async function enviar(){
 
  }catch(e){console.log(e);}
 
+ pre.remove();
+
  if(data && data.text){
    setTimeout(()=>{
      t.remove();
@@ -245,8 +268,11 @@ async function enviar(){
    }, tiempoHumano(data.text));
  }else{
    t.remove();
-   bubble("mmm… te me perdiste un segundo","bot");
-   status.innerText="en línea";
+
+   bubble("mmm… dame un segundo más","bot");
+   status.innerText="reintentando…";
+
+   setTimeout(()=>enviarRetry(txt),1200);
  }
 }
 
@@ -263,6 +289,8 @@ setInterval(async ()=>{
 
   await new Promise(r=>setTimeout(r,500+Math.random()*1000));
 
+  const pre = bubble("mmm…","bot");
+
   status.innerText="escribiendo...";
   const t=typing();
 
@@ -272,14 +300,13 @@ setInterval(async ()=>{
    const res=await fetch("https://tete-api-production.up.railway.app/chat",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      mensaje:"INICIAR_CONVERSACION",
-      userId
-    })
+    body:JSON.stringify({mensaje:"INICIAR_CONVERSACION",userId})
    });
 
    data=await res.json();
   }catch{}
+
+  pre.remove();
 
   if(data && data.text){
    setTimeout(()=>{
