@@ -4,41 +4,143 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh}
+body{
+margin:0;
+font-family:sans-serif;
+background:#000;
+color:#fff;
+display:flex;
+flex-direction:column;
+height:100vh;
+}
 
-#chat{flex:1;overflow:auto;padding:15px;display:flex;flex-direction:column;gap:10px}
+/* HEADER */
+#header{
+display:flex;
+align-items:center;
+padding:12px;
+background:#111;
+border-bottom:1px solid #222;
+}
 
-.bubble{max-width:75%;padding:12px;border-radius:18px;animation:fade .2s}
-.user{align-self:flex-end;background:#2563eb}
-.bot{align-self:flex-start;background:#222}
+#header img{
+width:40px;
+height:40px;
+border-radius:50%;
+margin-right:10px;
+}
 
-@keyframes fade{from{opacity:0}to{opacity:1}}
+#status{
+font-size:12px;
+color:#aaa;
+}
 
-#bar{display:flex;padding:10px;background:#111}
-#input{flex:1;padding:10px;border:none;border-radius:20px;background:#222;color:#fff}
-#btn{margin-left:10px;padding:10px;border:none;border-radius:20px;background:#2563eb}
+/* CHAT */
+#chat{
+flex:1;
+overflow:auto;
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
 
-.dots{display:flex;gap:4px}
-.dot{width:6px;height:6px;background:#aaa;border-radius:50%;animation:blink 1.2s infinite}
-@keyframes blink{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+.bubble{
+max-width:75%;
+padding:12px;
+border-radius:18px;
+animation:fade .2s;
+}
+
+.user{
+align-self:flex-end;
+background:#2563eb;
+}
+
+.bot{
+align-self:flex-start;
+background:#222;
+}
+
+@keyframes fade{
+from{opacity:0}
+to{opacity:1}
+}
+
+/* INPUT */
+#bar{
+display:flex;
+padding:10px;
+background:#111;
+}
+
+#input{
+flex:1;
+padding:10px;
+border:none;
+border-radius:20px;
+background:#222;
+color:#fff;
+}
+
+#btn{
+margin-left:10px;
+padding:10px;
+border:none;
+border-radius:20px;
+background:#2563eb;
+color:#fff;
+}
+
+/* TYPING */
+.dots{
+display:flex;
+gap:4px;
+}
+
+.dot{
+width:6px;
+height:6px;
+background:#aaa;
+border-radius:50%;
+animation:blink 1.2s infinite;
+}
+
+@keyframes blink{
+0%{opacity:.2}
+50%{opacity:1}
+100%{opacity:.2}
+}
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
+<div id="header">
+<img src="https://raw.githubusercontent.com/aarreola-cyber/tete-front/main/650663840_122235082904132407_4121639713471677136_n.png">
+<div>
+<div>Tete</div>
+<div id="status">en línea</div>
+</div>
+</div>
+
+<!-- CHAT -->
 <div id="chat"></div>
 
+<!-- INPUT -->
 <div id="bar">
-<input id="input">
+<input id="input" placeholder="Escríbele...">
 <button id="btn">→</button>
 </div>
 
 <script>
 let userId = localStorage.getItem("id") || crypto.randomUUID();
-localStorage.setItem("id",userId);
+localStorage.setItem("id", userId);
 
-const chat=document.getElementById("chat");
-const input=document.getElementById("input");
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const status = document.getElementById("status");
 
 function bubble(t,c){
  const d=document.createElement("div");
@@ -53,12 +155,12 @@ function typing(){
  d.className="bubble bot";
  d.innerHTML='<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
  chat.appendChild(d);
+ chat.scrollTop=chat.scrollHeight;
  return d;
 }
 
 function tiempo(t){
  let x=300+t.length*20;
- if(Math.random()<.2)x+=300;
  return Math.min(x,2000);
 }
 
@@ -69,6 +171,7 @@ async function enviar(){
  bubble(txt,"user");
  input.value="";
 
+ status.innerText="escribiendo...";
  const t=typing();
 
  let data=null;
@@ -79,21 +182,31 @@ async function enviar(){
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({mensaje:txt,userId})
   });
+
   data=await res.json();
- }catch{}
+
+ }catch(e){
+  console.log("ERROR:",e);
+ }
 
  t.remove();
 
- if(data&&data.text){
-   setTimeout(()=>bubble(data.text,"bot"),tiempo(data.text));
+ if(data && data.text){
+   setTimeout(()=>{
+     bubble(data.text,"bot");
+     status.innerText="en línea";
+   }, tiempo(data.text));
  }else{
-   bubble("…","bot");
+   bubble("… sigo aquí","bot");
+   status.innerText="en línea";
  }
 }
 
 input.addEventListener("keydown",e=>{
- if(e.key==="Enter")enviar();
+ if(e.key==="Enter") enviar();
 });
+
+document.getElementById("btn").onclick=enviar;
 </script>
 
 </body>
