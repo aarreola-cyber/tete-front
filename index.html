@@ -18,6 +18,9 @@ async function enviar() {
   agregar("tú", texto);
   input.value = "";
 
+  // 🔥 escribe...
+  const typing = agregar("tete", "...");
+  
   try {
     const res = await fetch("https://tete-api-production.up.railway.app/chat", {
       method: "POST",
@@ -29,12 +32,13 @@ async function enviar() {
 
     const data = await res.json();
 
+    // 🔥 reemplaza "..."
     setTimeout(() => {
-      agregar("tete", data.text);
-    }, 500); // 🔥 delay = más humano
+      typing.innerText = "tete: " + data.text;
+    }, 800 + Math.random() * 800);
 
   } catch (e) {
-    agregar("tete", "… no deberías estar aquí");
+    typing.innerText = "tete: … no deberías estar aquí";
   }
 }
 
@@ -55,6 +59,8 @@ function agregar(quien, texto) {
   }, 50);
 
   chat.scrollTop = chat.scrollHeight;
+
+  return div;
 }
 </script>
 
