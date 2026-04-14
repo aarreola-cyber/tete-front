@@ -10,6 +10,14 @@
 </div>
 
 <script>
+// 🔥 ID persistente
+let userId = localStorage.getItem("tete_user");
+
+if (!userId) {
+  userId = "user_" + Math.random().toString(36).substring(2);
+  localStorage.setItem("tete_user", userId);
+}
+
 async function enviar() {
   const input = document.getElementById("input");
   const texto = input.value;
@@ -18,27 +26,28 @@ async function enviar() {
   agregar("tú", texto);
   input.value = "";
 
-  // 🔥 escribe...
   const typing = agregar("tete", "...");
-  
+
   try {
     const res = await fetch("https://tete-api-production.up.railway.app/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ mensaje: texto })
+      body: JSON.stringify({
+        mensaje: texto,
+        userId: userId
+      })
     });
 
     const data = await res.json();
 
-    // 🔥 reemplaza "..."
     setTimeout(() => {
       typing.innerText = "tete: " + data.text;
     }, 800 + Math.random() * 800);
 
   } catch (e) {
-    typing.innerText = "tete: … no deberías estar aquí";
+    typing.innerText = "tete: … te perdiste";
   }
 }
 
@@ -54,9 +63,7 @@ function agregar(quien, texto) {
 
   chat.appendChild(div);
 
-  setTimeout(() => {
-    div.style.opacity = "1";
-  }, 50);
+  setTimeout(() => div.style.opacity = "1", 50);
 
   chat.scrollTop = chat.scrollHeight;
 
