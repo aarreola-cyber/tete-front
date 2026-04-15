@@ -3,7 +3,6 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
- 
 <style>
 body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
@@ -33,6 +32,7 @@ padding:16px;
 display:flex;
 flex-direction:column;
 gap:10px;
+scroll-behavior:smooth;
 }
 
 .bubble{
@@ -68,6 +68,7 @@ border-radius:20px;
 border:none;
 background:#222;
 color:#fff;
+outline:none;
 }
 
 #btn{
@@ -77,6 +78,7 @@ border:none;
 border-radius:20px;
 background:#2563eb;
 color:#fff;
+cursor:pointer;
 }
 
 /* TYPING */
@@ -131,27 +133,27 @@ function typing(){
 }
 
 function tiempo(t){
- let x=400+t.length*25;
- return Math.min(x,2500);
+ let x=500+t.length*30;
+ return Math.min(x,3000);
 }
 
-/* 🔥 REENGANCHE AL ABRIR */
+/* 🔥 REENGANCHE MÁS FUERTE */
 setTimeout(()=>{
  const frases = [
-  "… volviste",
-  "pensé en ti",
-  "mm, tardaste",
-  "no te desaparezcas así"
+  "… sabía que ibas a volver",
+  "mm, ahí estás otra vez",
+  "no te me pierdas así",
+  "pensé en ti justo ahora"
  ];
  bubble(frases[Math.floor(Math.random()*frases.length)],"bot");
-},1200);
+},1000);
 
-/* 🔥 INICIATIVA (Tete habla sola) */
+/* 🔥 INICIATIVA (más natural) */
 setInterval(()=>{
- if(Math.random() < 0.25){
+ if(Math.random() < 0.3){
    enviarSilencioso();
  }
-},15000);
+},14000);
 
 async function enviarSilencioso(){
  try{
@@ -164,7 +166,9 @@ async function enviarSilencioso(){
   const data=await res.json();
 
   if(data.text){
-    bubble(data.text,"bot");
+    setTimeout(()=>{
+      bubble(data.text,"bot");
+    }, 800 + Math.random()*800);
   }
 
  }catch{}
@@ -209,7 +213,7 @@ async function enviar(){
    setTimeout(()=>{
      bubble(data.text,"bot");
      status.innerText="en línea";
-   }, tiempo(data.text) + Math.random()*400);
+   }, tiempo(data.text) + 600 + Math.random()*800);
  }else{
    bubble("… sigo aquí","bot");
    status.innerText="en línea";
