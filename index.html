@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh}
 #header{display:flex;align-items:center;padding:12px;background:#111}
 #header img{width:42px;height:42px;border-radius:50%;margin-right:10px}
 #status{font-size:12px;color:#aaa}
@@ -70,37 +70,27 @@ function tiempo(t){
  return Math.min(600 + t.length*30, 3000);
 }
 
-/* reenganche */
+/* REENGANCHE */
 setTimeout(()=>{
- const frases=[
-  "… sabía que ibas a volver",
-  "mm, ahí estás",
-  "pensé en ti",
-  "no te desaparezcas así"
- ];
- bubble(frases[Math.floor(Math.random()*frases.length)],"bot");
+ bubble("… sabía que ibas a volver","bot");
 },1000);
 
-/* iniciativa */
-setInterval(()=>{
- if(Math.random()<0.3){
-  enviarSilencioso();
+/* INICIATIVA REAL */
+setInterval(async ()=>{
+ if(Math.random() < 0.3){
+   try{
+     const res=await fetch("https://tete-api-production.up.railway.app/ping",{
+       method:"POST",
+       headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({userId})
+     });
+     const data=await res.json();
+     if(data.text){
+       bubble(data.text,"bot");
+     }
+   }catch{}
  }
-},15000);
-
-async function enviarSilencioso(){
- try{
-  const res=await fetch("https://tete-api-production.up.railway.app/chat",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({mensaje:"...",userId})
-  });
-  const data=await res.json();
-  if(data.text){
-    setTimeout(()=>bubble(data.text,"bot"),800+Math.random()*800);
-  }
- }catch{}
-}
+},20000);
 
 async function enviar(){
  const txt=input.value.trim();
