@@ -130,8 +130,43 @@ function typing(){
 }
 
 function tiempo(t){
- let x=300+t.length*20;
- return Math.min(x,2000);
+ let x=400+t.length*25;
+ return Math.min(x,2500);
+}
+
+/* 🔥 REENGANCHE AL ABRIR */
+setTimeout(()=>{
+ const frases = [
+  "… volviste",
+  "pensé en ti",
+  "mm, tardaste",
+  "no te desaparezcas así"
+ ];
+ bubble(frases[Math.floor(Math.random()*frases.length)],"bot");
+},1200);
+
+/* 🔥 INICIATIVA (Tete habla sola) */
+setInterval(()=>{
+ if(Math.random() < 0.25){
+   enviarSilencioso();
+ }
+},15000);
+
+async function enviarSilencioso(){
+ try{
+  const res=await fetch("https://tete-api-production.up.railway.app/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({mensaje:"...",userId})
+  });
+
+  const data=await res.json();
+
+  if(data.text){
+    bubble(data.text,"bot");
+  }
+
+ }catch{}
 }
 
 async function enviar(){
@@ -165,9 +200,7 @@ async function enviar(){
     data={text:"… casi te respondo"};
   }
 
- }catch(e){
-  console.log("ERROR:",e);
- }
+ }catch(e){}
 
  t.remove();
 
@@ -175,7 +208,7 @@ async function enviar(){
    setTimeout(()=>{
      bubble(data.text,"bot");
      status.innerText="en línea";
-   }, tiempo(data.text));
+   }, tiempo(data.text) + Math.random()*400);
  }else{
    bubble("… sigo aquí","bot");
    status.innerText="en línea";
