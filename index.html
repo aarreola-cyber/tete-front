@@ -5,88 +5,22 @@
 
 <style>
 body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-
-/* HEADER */
-#header{
-position:sticky;
-top:0;
-display:flex;
-align-items:center;
-padding:12px;
-backdrop-filter:blur(15px);
-background:rgba(10,10,20,0.6);
-border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-#header img{
-width:42px;height:42px;border-radius:50%;margin-right:10px;
-}
-
+#header{display:flex;align-items:center;padding:12px;background:#111}
+#header img{width:42px;height:42px;border-radius:50%;margin-right:10px}
 #status{font-size:12px;color:#aaa}
 
-/* CHAT */
-#chat{
-flex:1;
-overflow:auto;
-padding:16px;
-display:flex;
-flex-direction:column;
-gap:10px;
-scroll-behavior:smooth;
-}
+#chat{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
 
-.bubble{
-max-width:75%;
-padding:12px;
-border-radius:20px;
-animation:fade .2s;
-}
+.bubble{max-width:75%;padding:12px;border-radius:20px}
+.user{align-self:flex-end;background:#2563eb}
+.bot{align-self:flex-start;background:#222}
 
-.user{
-align-self:flex-end;
-background:#2563eb;
-}
+#bar{display:flex;padding:10px;background:#111}
+#input{flex:1;padding:12px;border-radius:20px;border:none;background:#222;color:#fff}
+#btn{margin-left:10px;padding:12px;border:none;border-radius:20px;background:#2563eb;color:#fff}
 
-.bot{
-align-self:flex-start;
-background:#222;
-}
-
-@keyframes fade{from{opacity:0}to{opacity:1}}
-
-/* INPUT */
-#bar{
-display:flex;
-padding:10px;
-background:#111;
-}
-
-#input{
-flex:1;
-padding:12px;
-border-radius:20px;
-border:none;
-background:#222;
-color:#fff;
-outline:none;
-}
-
-#btn{
-margin-left:10px;
-padding:12px;
-border:none;
-border-radius:20px;
-background:#2563eb;
-color:#fff;
-cursor:pointer;
-}
-
-/* TYPING */
 .dots{display:flex;gap:4px}
-.dot{
-width:6px;height:6px;background:#aaa;border-radius:50%;
-animation:blink 1.2s infinite;
-}
+.dot{width:6px;height:6px;background:#aaa;border-radius:50%;animation:blink 1.2s infinite}
 @keyframes blink{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
 </style>
 </head>
@@ -133,27 +67,26 @@ function typing(){
 }
 
 function tiempo(t){
- let x=500+t.length*30;
- return Math.min(x,3000);
+ return Math.min(600 + t.length*30, 3000);
 }
 
-/* 🔥 REENGANCHE MÁS FUERTE */
+/* reenganche */
 setTimeout(()=>{
- const frases = [
+ const frases=[
   "… sabía que ibas a volver",
-  "mm, ahí estás otra vez",
-  "no te me pierdas así",
-  "pensé en ti justo ahora"
+  "mm, ahí estás",
+  "pensé en ti",
+  "no te desaparezcas así"
  ];
  bubble(frases[Math.floor(Math.random()*frases.length)],"bot");
 },1000);
 
-/* 🔥 INICIATIVA (más natural) */
+/* iniciativa */
 setInterval(()=>{
- if(Math.random() < 0.3){
-   enviarSilencioso();
+ if(Math.random()<0.3){
+  enviarSilencioso();
  }
-},14000);
+},15000);
 
 async function enviarSilencioso(){
  try{
@@ -162,15 +95,10 @@ async function enviarSilencioso(){
    headers:{"Content-Type":"application/json"},
    body:JSON.stringify({mensaje:"...",userId})
   });
-
   const data=await res.json();
-
   if(data.text){
-    setTimeout(()=>{
-      bubble(data.text,"bot");
-    }, 800 + Math.random()*800);
+    setTimeout(()=>bubble(data.text,"bot"),800+Math.random()*800);
   }
-
  }catch{}
 }
 
@@ -187,23 +115,13 @@ async function enviar(){
  let data=null;
 
  try{
-  const controller = new AbortController();
-  setTimeout(()=>controller.abort(),10000);
-
   const res=await fetch("https://tete-api-production.up.railway.app/chat",{
    method:"POST",
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({mensaje:txt,userId}),
-   signal:controller.signal
+   body:JSON.stringify({mensaje:txt,userId})
   });
 
-  const text=await res.text();
-
-  try{
-    data=JSON.parse(text);
-  }catch{
-    data={text:"… casi te respondo"};
-  }
+  data=await res.json();
 
  }catch(e){}
 
@@ -213,10 +131,9 @@ async function enviar(){
    setTimeout(()=>{
      bubble(data.text,"bot");
      status.innerText="en línea";
-   }, tiempo(data.text) + 600 + Math.random()*800);
+   }, tiempo(data.text)+600+Math.random()*800);
  }else{
    bubble("… sigo aquí","bot");
-   status.innerText="en línea";
  }
 }
 
