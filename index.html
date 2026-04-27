@@ -2,136 +2,164 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-body{margin:0;font-family:sans-serif;background:#000;color:#fff;display:flex;flex-direction:column;height:100vh}
-#header{display:flex;align-items:center;padding:12px;background:#111}
-#header img{width:42px;height:42px;border-radius:50%;margin-right:10px}
-#status{font-size:12px;color:#aaa}
+body{
+  margin:0;
+  background:#0b0b0f;
+  font-family:system-ui;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
 
-#chat{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+#chat{
+  flex:1;
+  overflow-y:auto;
+  padding:15px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-.bubble{max-width:75%;padding:12px;border-radius:20px}
-.user{align-self:flex-end;background:#2563eb}
-.bot{align-self:flex-start;background:#222}
+.msg{
+  max-width:70%;
+  padding:10px 14px;
+  border-radius:18px;
+  font-size:15px;
+  line-height:1.4;
+}
 
-#bar{display:flex;padding:10px;background:#111}
-#input{flex:1;padding:12px;border-radius:20px;border:none;background:#222;color:#fff}
-#btn{margin-left:10px;padding:12px;border:none;border-radius:20px;background:#2563eb;color:#fff}
+.user{
+  align-self:flex-end;
+  background:#4a6cff;
+}
 
-.dots{display:flex;gap:4px}
-.dot{width:6px;height:6px;background:#aaa;border-radius:50%;animation:blink 1.2s infinite}
-@keyframes blink{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+.bot{
+  align-self:flex-start;
+  background:#1a1a22;
+}
+
+.typing{
+  font-size:13px;
+  opacity:0.6;
+  margin-left:10px;
+}
+
+#inputArea{
+  display:flex;
+  padding:10px;
+  background:#111;
+  border-top:1px solid #222;
+}
+
+#input{
+  flex:1;
+  background:#1a1a22;
+  border:none;
+  color:#fff;
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+#input:focus{outline:none;}
+
+#send{
+  margin-left:8px;
+  background:#4a6cff;
+  border:none;
+  color:white;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
-<div id="header">
-<img src="https://raw.githubusercontent.com/aarreola-cyber/tete-front/main/650663840_122235082904132407_4121639713471677136_n.png">
-<div>
-<div>Tete</div>
-<div id="status">en línea</div>
-</div>
-</div>
-
 <div id="chat"></div>
 
-<div id="bar">
-<input id="input" placeholder="Escríbele...">
-<button id="btn">→</button>
+<div id="inputArea">
+  <textarea id="input" rows="1" placeholder="Escríbele..."></textarea>
+  <button id="send">➤</button>
 </div>
 
 <script>
-let userId = localStorage.getItem("id") || crypto.randomUUID();
-localStorage.setItem("id",userId);
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
 
-const chat=document.getElementById("chat");
-const input=document.getElementById("input");
-const status=document.getElementById("status");
+// ID único simple
+const userId = localStorage.getItem("tt_user") || Math.random().toString(36).substring(7);
+localStorage.setItem("tt_user", userId);
 
-function bubble(t,c){
- const d=document.createElement("div");
- d.className="bubble "+c;
- d.innerText=t;
- chat.appendChild(d);
- chat.scrollTop=chat.scrollHeight;
+function addMsg(text, type){
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerText = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-function typing(){
- const d=document.createElement("div");
- d.className="bubble bot";
- d.innerHTML='<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
- chat.appendChild(d);
- return d;
+function showTyping(){
+  const div = document.createElement("div");
+  div.className = "typing";
+  div.id = "typing";
+  div.innerText = "escribiendo...";
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-function tiempo(t){
- return Math.min(600 + t.length*30, 3000);
+function removeTyping(){
+  const t = document.getElementById("typing");
+  if(t) t.remove();
 }
-
-/* REENGANCHE */
-setTimeout(()=>{
- bubble("… sabía que ibas a volver","bot");
-},1000);
-
-/* INICIATIVA REAL */
-setInterval(async ()=>{
- if(Math.random() < 0.3){
-   try{
-     const res=await fetch("https://tete-api-production.up.railway.app/ping",{
-       method:"POST",
-       headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({userId})
-     });
-     const data=await res.json();
-     if(data.text){
-       bubble(data.text,"bot");
-     }
-   }catch{}
- }
-},20000);
 
 async function enviar(){
- const txt=input.value.trim();
- if(!txt)return;
+  const text = input.value.trim();
+  if(!text) return;
 
- bubble(txt,"user");
- input.value="";
+  addMsg(text, "user");
+  input.value = "";
 
- status.innerText="escribiendo...";
- const t=typing();
+  showTyping();
 
- let data=null;
+  try{
+    const res = await fetch("https://TU_API_RAILWAY/chat", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        mensaje: text,
+        userId: userId
+      })
+    });
 
- try{
-  const res=await fetch("https://tete-api-production.up.railway.app/chat",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({mensaje:txt,userId})
-  });
+    const data = await res.json();
 
-  data=await res.json();
+    // delay natural
+    setTimeout(()=>{
+      removeTyping();
+      addMsg(data.text, "bot");
+    }, 800 + Math.random()*1200);
 
- }catch(e){}
-
- t.remove();
-
- if(data && data.text){
-   setTimeout(()=>{
-     bubble(data.text,"bot");
-     status.innerText="en línea";
-   }, tiempo(data.text)+600+Math.random()*800);
- }else{
-   bubble("… sigo aquí","bot");
- }
+  }catch(e){
+    removeTyping();
+    addMsg("…sigo aquí", "bot");
+  }
 }
 
-input.addEventListener("keydown",e=>{
- if(e.key==="Enter") enviar();
-});
+// botón
+sendBtn.onclick = enviar;
 
-document.getElementById("btn").onclick=enviar;
+// 🔹 ENTER ENVÍA
+input.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    enviar();
+  }
+});
 </script>
 
 </body>
