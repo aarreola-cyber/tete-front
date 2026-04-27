@@ -127,7 +127,7 @@ async function enviar(){
   showTyping();
 
   try{
-    const res = await fetch("https://TU_API_RAILWAY/chat", {
+    const res = await fetch("https://tete-api-production.up.railway.app/chat", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
